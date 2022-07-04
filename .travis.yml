@@ -1,0 +1,22 @@
+sudo: required
+services:
+  - docker
+
+before_install:
+  - docker build -t zuczeq/react-test -f ./client/Dockerfile.dev ./client
+
+script:
+  - docker run -e CI=true zuczeq/react-test npm test
+
+after_success:
+  - docker build -t zuczeq/multi-client ./client
+  - docker build -t zuczeq/multi-nginx ./nginx
+  - docker build -t zuczeq/multi-server ./server
+  - docker build -t zuczeq/multi-worker ./worker
+  # Login to docker hub: docker login
+  - echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_ID" --password-stdin
+  # take them and push to dockerhub
+  - docker push zuczeq/multi-client
+  - docker push zuczeq/multi-nginx
+  - docker push zuczeq/multi-server
+  - docker push zuczeq/multi-worker
